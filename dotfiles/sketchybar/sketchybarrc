@@ -1,0 +1,90 @@
+#!/usr/bin/env sh
+# sketchybarrc — Saturn Pursuit (neon)
+
+# ── Paleta (igual ao starship) ───────────────────────────────
+SAT_BG=0xE6000014   # fundo blur (E6=~90% opacidade)
+SAT_FG=0xFFE5E5E5
+SAT_ROSE=0xFF8B5CF6  # seg1
+SAT_BLUE=0xFF00B3FF  # seg2
+SAT_CYAN=0xFF00FFD5  # seg3
+SAT_OK=0xFF22C55E
+SAT_WARN=0xFFFFDD00
+SAT_ERR=0xFFFF6E6E
+SAT_TIME=0xFF767676
+
+# ── Barra ────────────────────────────────────────────────────
+sketchybar --bar \
+  height=26 \
+  position=top \
+  color=$SAT_BG \
+  blur_radius=20 \
+  corner_radius=8 \
+  margin=8
+
+# Fonte & defaults
+sketchybar --default \
+  icon.font="JetBrainsMono Nerd Font:Bold:14.0" \
+  label.font="JetBrainsMono Nerd Font:Bold:12.0" \
+  icon.color=$SAT_CYAN \
+  label.color=$SAT_FG \
+  padding_left=6 padding_right=6
+
+# ── Spaces (esquerda) ────────────────────────────────────────
+# um script atualiza a lista e marca o ativo
+sketchybar --add item spaces left \
+  --set spaces script="~/conf-files/shellscripts/sb_spaces.sh" \
+               updates=on \
+               label.color=$SAT_ROSE
+
+# ── Título da janela (centro) ────────────────────────────────
+
+# ── Associa sinais do yabai para refresh (opcional) ──────────
+# Requer que o yabai emita signals (podes ligar no yabairc).
+# sketchybar --add event yabai_window_focused
+# sketchybar --subscribe title front_app_switched window_title_changed
+# sketchybar --subscribe spaces space_change
+
+# ── Spaces por item (cores e clique) ─────────────────────────
+# corre o setup no arranque
+~/conf-files/shellscripts/sb_spaces_setup.sh
+
+# (remover a versão antiga baseada num único item "spaces")
+# sketchybar --add item spaces left ...
+# sketchybar --set spaces ...
+
+# ── Sistema (direita): CPU / RAM / Temp / Wi‑Fi / Bateria / Relógio ─
+# CPU
+sketchybar --add item cpu right \
+  --set cpu update_freq=5 \
+           script="~/conf-files/shellscripts/sb_cpu.sh" \
+           label.color=0xFFE5E5E5 icon.color=0xFF00FFD5
+
+# RAM
+sketchybar --add item mem right \
+  --set mem update_freq=5 \
+           script="~/conf-files/shellscripts/sb_mem.sh" \
+           label.color=0xFFE5E5E5 icon.color=0xFF8B5CF6
+
+# Temp
+sketchybar --add item temp right \
+  --set temp update_freq=10 \
+            script="~/conf-files/shellscripts/sb_temp.sh" \
+            label.color=0xFFE5E5E5 icon.color=0xFFFFDD00
+
+# Wi‑Fi
+sketchybar --add item wifi right \
+  --set wifi update_freq=10 \
+            script="networksetup -getairportnetwork en0 2>/dev/null | awk -F': ' '{print \"  \"$2}'" \
+            icon.color=0xFF00B3FF label.color=0xFFE5E5E5
+
+# Bateria
+sketchybar --add item battery right \
+  --set battery update_freq=30 \
+               script="pmset -g batt | awk 'NR==2{gsub(\";\",\"\",$3); print \"  \"$3}'" \
+               icon.color=0xFF22C55E label.color=0xFFE5E5E5
+
+# Relógio
+sketchybar --add item clock right \
+  --set clock update_freq=10 \
+             script="date '+  %Y-%m-%d    %H:%M'" \
+             label.color=0xFF767676

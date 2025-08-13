@@ -1,0 +1,171 @@
+# ===== Starship — Saturn Pursuit (rainbow-fill, 2 linhas) =====
+add_newline = true
+palette = "saturn"
+
+# LINHA 1 (esquerda) e LINHA 2 (prompt)
+format = """
+$custom_userhost$directory$git_branch$custom_git_state$fill
+$character
+"""
+
+# LINHA 1 (direita)  ← AQUI entram ahead/behind com cores próprias
+right_format = "$custom_git_ahead$custom_git_behind$cmd_duration$custom_lang$ssh$time$status"
+
+[character]
+success_symbol = "[🪐➤♄ ](fg:bg0 bg:none)"
+error_symbol   = "[🪐➤♄ ](fg:error bg:none)"
+vicmd_symbol   = "[🪐➤♄ ](fg:seg3 bg:none)"
+
+[palettes.saturn]
+bg0   = "#000014"
+fg0   = "#E5E5E5"
+seg1  = "#8B5CF6"
+seg2  = "#00B3FF"
+seg3  = "#00FFD5"
+ok    = "#22C55E"
+warn  = "#FFDD00"
+ahead = "#5EEAD4"
+behind= "#F59E0B"
+error = "#FF6E6E"
+timec = "#767676"
+blk   = "#0A0A0A"
+
+# ── user@host (bloco 1) ──────────────────────────────────────
+[custom.custom_userhost]
+command = 'printf "%s@%s >" "$USER" "$(hostname -s)"'
+shell = ["bash","-lc"]
+when = "true"
+format = "[](fg:seg1)[$output](fg:bg0 bg:seg1)[](fg:seg1 bg:seg2)"
+
+# ── diretório (bloco 2) ──────────────────────────────────────
+[directory]
+style = "fg:bg0 bg:seg2"
+truncation_length = 3
+truncate_to_repo = true
+format = "[$path]($style)[](fg:seg2 bg:seg3)"
+
+# ── ramo git (bloco 3) ───────────────────────────────────────
+[git_branch]
+symbol = " "
+style = "fg:bg0 bg:seg3"
+format = "[$symbol$branch]($style)"
+
+# ── estado git (clean/changed/conflicts) com cor própria ─────
+[custom.custom_git_state]
+shell = ["bash","-lc"]
+when = 'git rev-parse --is-inside-work-tree >/dev/null 2>&1'
+command = '''
+out=""
+readarray -t lines < <(git status --porcelain=2 -b 2>/dev/null || true)
+staged=0; modified=0; untracked=0; conflicted=0; renamed=0; deleted=0
+for l in "${lines[@]}"; do
+  c="${l:0:1}"
+  case "$c" in
+    1|2)
+      x="${l:2:1}"; y="${l:3:1}"
+      [[ "$x" != "." ]] && ((staged++))
+      [[ "$y" != "." ]] && ((modified++))
+      [[ "$c" == "2" ]] && ((renamed++))
+      ;;
+    ?)
+      ((untracked++))
+      ;;
+    u)
+      ((conflicted++))
+      ;;
+  esac
+done
+(( staged    > 0 )) && out+="+${staged} "
+(( modified  > 0 )) && out+="✎${modified} "
+(( untracked > 0 )) && out+="…${untracked} "
+(( renamed   > 0 )) && out+="»${renamed} "
+(( deleted   > 0 )) && out+="✘${deleted} "
+(( conflicted> 0 )) && out+="⚠${conflicted} "
+echo "$out"
+'''
+# Três blocos condicionais (cores) baseados no output do módulo acima:
+format = "$output"
+
+[custom.git_state_clean]
+shell = ["bash","-lc"]
+when = 'git rev-parse --is-inside-work-tree >/dev/null 2>&1 && test -z "$(starship module custom.custom_git_state)"'
+command = 'echo " "'
+format  = "[ ](bg:seg3)[✓ clean](fg:bg0 bg:ok)[](fg:ok bg:none)"
+
+[custom.git_state_changed]
+shell = ["bash","-lc"]
+when = 'git rev-parse --is-inside-work-tree >/dev/null 2>&1 && test -n "$(starship module custom.custom_git_state)" && ! starship module custom.custom_git_state | grep -q "⚠"'
+command = 'starship module custom.custom_git_state'
+format  = "[ ](bg:seg3)[$output](fg:blk bg:warn)[](fg:warn bg:none)"
+
+[custom.git_state_conflicts]
+shell = ["bash","-lc"]
+when = 'git rev-parse --is-inside-work-tree >/dev/null 2>&1 && starship module custom.custom_git_state | grep -q "⚠"'
+command = 'starship module custom.custom_git_state'
+format  = "[ ](bg:seg3)[$output](fg:bg0 bg:error)[](fg:error bg:none)"
+
+# ── AHEAD / BEHIND (cores próprias) → lado direito ───────────
+[custom.custom_git_ab]
+shell = ["bash","-lc"]
+when = 'git rev-parse --is-inside-work-tree >/dev/null 2>&1'
+command = '''
+ahead=""; behind=""
+while IFS= read -r l; do
+  [[ "$l" =~ ^#\ branch\.ab\ +ahead\ ([0-9]+)\ +behind\ ([0-9]+) ]] && { ahead="${BASH_REMATCH[1]}"; behind="${BASH_REMATCH[2]}"; break; }
+  [[ "$l" =~ ^#\ branch\.ab\ +ahead\ ([0-9]+) ]] && ahead="${BASH_REMATCH[1]}"
+  [[ "$l" =~ ^#\ branch\.ab\ +behind\ ([0-9]+) ]] && behind="${BASH_REMATCH[1]}"
+done < <(git status --porcelain=2 -b 2>/dev/null || true)
+echo "${ahead:-0} ${behind:-0}"
+'''
+format = "$output"
+
+[custom.custom_git_ahead]
+shell = ["bash","-lc"]
+when = 'set -- $(starship module custom.custom_git_ab); test "${1:-0}" != "0"'
+command = 'set -- $(starship module custom.custom_git_ab); echo "⇡$1"'
+format  = "[](fg:ahead)[$output](fg:bg0 bg:ahead)[](fg:ahead bg:none)"
+
+[custom.custom_git_behind]
+shell = ["bash","-lc"]
+when = 'set -- $(starship module custom.custom_git_ab); test "${2:-0}" != "0"'
+command = 'set -- $(starship module custom.custom_git_ab); echo "⇣$2"'
+format  = "[](fg:behind)[$output](fg:bg0 bg:behind)[](fg:behind bg:none)"
+
+# ── duração comando ──────────────────────────────────────────
+[cmd_duration]
+min_time = 1000
+format = "[](fg:ok)[ ⏱ $duration ](fg:bg0 bg:ok)[](fg:ok bg:none)"
+
+# ── linguagens (Node / Python) ───────────────────────────────
+[custom.custom_lang]
+shell = ["bash","-lc"]
+when = "true"
+command = '''
+out=""
+if command -v node >/dev/null 2>&1 && [ -f package.json ]; then
+  ver="$(node -v 2>/dev/null)"; out="$out[  $ver ]"
+fi
+if command -v python3 >/dev/null 2>&1 && ( [ -f pyproject.toml ] || [ -f requirements.txt ] || [ -f .python-version ] ); then
+  ver="$(python3 -V 2>/dev/null | awk '{print $2}')"; out="$out[ 🐍 $ver ]"
+fi
+echo "$out"
+'''
+format = "[](fg:seg3)[$output](fg:bg0 bg:seg3)[](fg:seg3 bg:none)"
+
+# ── ssh ──────────────────────────────────────────────────────
+[ssh]
+disabled = false
+format = "[](fg:warn)[  ssh ](fg:bg0 bg:warn)[](fg:warn bg:none)"
+
+# ── hora ─────────────────────────────────────────────────────
+[time]
+disabled = false
+time_format = "%H:%M"
+format = "[](fg:timec)[ 🕒 $time ](fg:bg0 bg:timec)[](fg:timec bg:none)"
+
+# ── status erro (retcode) ────────────────────────────────────
+[status]
+disabled = false
+map_symbol = true
+pipestatus = false
+format = "[](fg:error)[ ✘ $status ](fg:bg0 bg:error)[](fg:error bg:none)"

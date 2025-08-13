@@ -1,0 +1,28 @@
+[user]
+    name = Your Name
+    email = your.email@example.com
+[core]
+    editor = nvim
+    autocrlf = input
+    excludesfile = ~/.gitignore_global
+[color]
+    ui = auto
+[alias]
+    st = status -sb
+    co = checkout
+    br = branch
+    ci = commit
+    amend = commit --amend --no-edit
+    unstage = reset HEAD --
+    last = log -1 HEAD
+    lg = log --oneline --graph --decorate --all
+[push]
+    default = current
+[pull]
+    rebase = true
+[merge]
+    ff = only
+[diff]
+    tool = nvimdiff
+[init]
+    defaultBranch = main
