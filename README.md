@@ -44,8 +44,8 @@ Este passo:
 
 
 ### **Step 3** — Configurar Neovim com suporte a múltiplas linguagens:
-    1. chmod +x step3-setup-editors.sh
-    2. ./step3-setup-editors.sh
+   1. chmod +x step3-setup-editors.sh
+   2. ./step3-setup-editors.sh
 
 Este passo:
 - **Neovim** (com a tua config do pack, se existir)
@@ -59,10 +59,16 @@ Este passo:
 
 
 ### **Step 4** — Ajustes de sistema (macOS tweaks):
-   1. 
+   1. chmod +x step4-setup-nvim.sh
+   2. ./step4-setup-nvim.sh 
 
 Este passo:
-- ...
+- Verifica se o Neovim está instalado.
+- Instala o packer.nvim (se não estiver presente).
+- Copia o init.lua e as configs adicionais da nossa pasta dotfiles/nvim/ para ~/.config/nvim/.
+- Instala LSPs, formatadores e linters via Mason.
+- Instala as ferramentas globais necessárias (omnisharp, csharpier, jdtls, google-java-format, etc.).
+- Instala Treesitter e faz :PackerSync automaticamente
 
 
 
