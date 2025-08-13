@@ -1,0 +1,5 @@
+[
+  { "key": "cmd+b", "command": "workbench.action.toggleSidebarVisibility" },
+  { "key": "cmd+\\", "command": "workbench.action.splitEditor" },
+  { "key": "cmd+j", "command": "workbench.action.togglePanel" }
+]
